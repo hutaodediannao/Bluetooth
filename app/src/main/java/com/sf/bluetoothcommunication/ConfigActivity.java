@@ -20,6 +20,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.sf.bluetoothcommunication.adapter.BaseRecyclerAdapter;
 import com.sf.bluetoothcommunication.adapter.DeviceAdapter;
 import com.sf.bluetoothcommunication.model.ExtBluetoothDevice;
 
@@ -52,12 +53,27 @@ public class ConfigActivity extends BaseActivity {
         setContentView(R.layout.activity_config);
         //初始化基本UI
         initBaseUI();
+        //点击事件
+        initEvent();
         //注册监听设备搜索的广播
         registBroadcastReceiver();
         //打开蓝牙设备
         startBluetoothDevice();
         //查询配对设备列表
         getBindDeviceList();
+    }
+
+    /**
+     * 初始化点击事件
+     */
+    private void initEvent() {
+        mDeviceAdapter.setmClickItemListener(new BaseRecyclerAdapter.ClickItemListener<ExtBluetoothDevice>() {
+            @Override
+            public void onItemClick(ExtBluetoothDevice device) {
+
+
+            }
+        });
     }
 
     private void initBaseUI() {
