@@ -7,6 +7,8 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.sf.bluetoothcommunication.core.Pivot;
+
 public class MainActivity extends BaseActivity {
 
     private TextView tvConnectManager;
@@ -24,6 +26,9 @@ public class MainActivity extends BaseActivity {
         } else {
             Toast.makeText(this, "支持蓝牙", Toast.LENGTH_SHORT).show();
             tvConnectManager.setVisibility(View.VISIBLE);
+
+            //启动一个服务端监听的县城
+            Pivot.getInstance().startServerThread();
         }
     }
 

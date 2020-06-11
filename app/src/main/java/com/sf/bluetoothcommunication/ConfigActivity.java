@@ -22,7 +22,12 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.sf.bluetoothcommunication.adapter.BaseRecyclerAdapter;
 import com.sf.bluetoothcommunication.adapter.DeviceAdapter;
+import com.sf.bluetoothcommunication.core.Pivot;
+import com.sf.bluetoothcommunication.model.EventMsg;
 import com.sf.bluetoothcommunication.model.ExtBluetoothDevice;
+
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -64,14 +69,23 @@ public class ConfigActivity extends BaseActivity {
     }
 
     /**
+     * 此页面需要监听消息
+     * @return
+     */
+    @Override
+    public boolean supportEventBus() {
+        return true;
+    }
+
+    /**
      * 初始化点击事件
      */
     private void initEvent() {
         mDeviceAdapter.setmClickItemListener(new BaseRecyclerAdapter.ClickItemListener<ExtBluetoothDevice>() {
             @Override
             public void onItemClick(ExtBluetoothDevice device) {
-
-
+                bluetoothAdapter.cancelDiscovery();
+                Pivot.getInstance().connect(device);
             }
         });
     }
@@ -216,5 +230,9 @@ public class ConfigActivity extends BaseActivity {
         }
     }
 
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onEventMsg(EventMsg eventMsg) {
+        Toast.makeText(this, new String(eventMsg.getData()), Toast.LENGTH_SHORT).show();
+    }
 
 }
