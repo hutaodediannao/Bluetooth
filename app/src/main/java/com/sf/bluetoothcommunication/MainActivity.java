@@ -93,6 +93,7 @@ public class MainActivity extends BaseActivity {
                 Toast.makeText(this, "消息发送成功", Toast.LENGTH_SHORT).show();
                 String sendMsg = etMessage.getText().toString();
                 tvResult.append(sendMsg + "\n");
+                etMessage.setText("");
                 break;
             case -300:
                 Toast.makeText(this, "消息发送失败", Toast.LENGTH_SHORT).show();

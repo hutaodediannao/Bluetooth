@@ -38,6 +38,13 @@ public class Pivot {
     private static final String BLUETOOTH_UUID = "00001101-0000-1000-8000-00805F9B34FB";
 
     private Pivot() {
+        initThread();
+    }
+
+    /**
+     * 线程统一关闭
+     */
+    private void initThread() {
         if (connectThread != null) {
             connectThread.cancel();
             connectThread = null;
@@ -93,6 +100,15 @@ public class Pivot {
         //开始重新创建连接线程开启连接任务
         connectThread = new ConnectThread(device);
         connectThread.start();
+    }
+
+    /**
+     * 断开设备
+     * @param device
+     */
+    public void disconnect(ExtBluetoothDevice device) {
+        currentConnectedDevice = null;
+        initThread();
     }
 
     /**

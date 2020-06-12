@@ -6,6 +6,7 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
@@ -17,6 +18,7 @@ import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.ActivityCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -96,10 +98,29 @@ public class ConfigActivity extends BaseActivity {
      */
     private void initEvent() {
         mConnectedDeviceAdapter.setmClickItemListener(new BaseRecyclerAdapter.ClickItemListener<ExtBluetoothDevice>() {
+            private AlertDialog dialog;
+
             @Override
-            public void onItemClick(ExtBluetoothDevice device) {
-
-
+            public void onItemClick(final ExtBluetoothDevice device) {
+                //断开设备
+                if (dialog == null) {
+                    dialog = new AlertDialog.Builder(ConfigActivity.this)
+                            .setTitle("是否断开设备？")
+                            .setCancelable(false)
+                            .setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    dialog.dismiss();
+                                }
+                            })
+                            .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    Pivot.getInstance().disconnect(device);
+                                }
+                            }).create();
+                }
+                dialog.show();
             }
         });
         mDeviceAdapter.setmClickItemListener(new BaseRecyclerAdapter.ClickItemListener<ExtBluetoothDevice>() {

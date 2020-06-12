@@ -19,7 +19,9 @@
             android:id="@+id/iv"
             android:layout_width="50dp"
             android:layout_height="50dp"
-            android:src="@mipmap/ic_launcher" />
+            android:scaleType="centerInside"
+            android:padding="10dp"
+            android:src="@mipmap/mobile" />
 
         <TextView
             android:id="@+id/tvName"
