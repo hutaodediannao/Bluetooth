@@ -33,6 +33,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import static com.sf.bluetoothcommunication.model.EventMsg.CODE_100;
+import static com.sf.bluetoothcommunication.model.EventMsg.CODE_101;
+import static com.sf.bluetoothcommunication.model.EventMsg.CODE_200;
+
 /**
  * 姓名:胡涛
  * 工号:666
@@ -46,7 +50,12 @@ public class ConfigActivity extends BaseActivity {
     private static final int REQUEST_ENABLE_BT = 100;
     private static final int REQUEST_DISCOVER = 101;
 
-    //发现列表
+    //已连接
+    private RecyclerView connectRecyclerView;
+    private DeviceAdapter mConnectedDeviceAdapter;
+    private List<ExtBluetoothDevice> extConnectedBluetoothDeviceList = new ArrayList<>();
+
+    //发现
     private DeviceAdapter mDeviceAdapter;
     private List<ExtBluetoothDevice> extBluetoothDeviceList = new ArrayList<>();
     private RecyclerView discoverRecyclerView;
@@ -70,6 +79,7 @@ public class ConfigActivity extends BaseActivity {
 
     /**
      * 此页面需要监听消息
+     *
      * @return
      */
     @Override
@@ -81,6 +91,13 @@ public class ConfigActivity extends BaseActivity {
      * 初始化点击事件
      */
     private void initEvent() {
+        mConnectedDeviceAdapter.setmClickItemListener(new BaseRecyclerAdapter.ClickItemListener<ExtBluetoothDevice>() {
+            @Override
+            public void onItemClick(ExtBluetoothDevice device) {
+
+
+            }
+        });
         mDeviceAdapter.setmClickItemListener(new BaseRecyclerAdapter.ClickItemListener<ExtBluetoothDevice>() {
             @Override
             public void onItemClick(ExtBluetoothDevice device) {
@@ -94,11 +111,30 @@ public class ConfigActivity extends BaseActivity {
         //发现加载框
         progressBar = findViewById(R.id.progressBar);
         progressBar.setVisibility(View.GONE);
+
+        //已连接的设备列表
+        connectRecyclerView = findViewById(R.id.connectRecyclerView);
+        mConnectedDeviceAdapter = new DeviceAdapter(extConnectedBluetoothDeviceList, this);
+        connectRecyclerView.setLayoutManager(new LinearLayoutManager(this, RecyclerView.VERTICAL, false));
+        connectRecyclerView.setAdapter(mConnectedDeviceAdapter);
+        updateConnectedDeviceListUI();
+
         //发现列表初始化
         discoverRecyclerView = findViewById(R.id.discoverRecyclerView);
         mDeviceAdapter = new DeviceAdapter(extBluetoothDeviceList, this);
         discoverRecyclerView.setLayoutManager(new LinearLayoutManager(this, RecyclerView.VERTICAL, false));
         discoverRecyclerView.setAdapter(mDeviceAdapter);
+    }
+
+    /**
+     * 更新已连接UI列表
+     */
+    private void updateConnectedDeviceListUI() {
+        extConnectedBluetoothDeviceList.clear();
+        if (Pivot.getInstance().getCurrentConnectedDevice() != null){
+            extConnectedBluetoothDeviceList.add(Pivot.getInstance().getCurrentConnectedDevice());
+        }
+        mConnectedDeviceAdapter.notifyDataSetChanged();
     }
 
     @Override
@@ -163,8 +199,8 @@ public class ConfigActivity extends BaseActivity {
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
         } else {
-            //蓝牙已经开启
-            Toast.makeText(this, "蓝牙已经启动", Toast.LENGTH_SHORT).show();
+            //启动一个服务端监听的县城
+            Pivot.getInstance().startServerThread();
         }
     }
 
@@ -180,6 +216,8 @@ public class ConfigActivity extends BaseActivity {
                 if (resultCode == RESULT_OK) {
                     //表示蓝牙开启成功
                     Toast.makeText(this, "蓝牙启动成功", Toast.LENGTH_SHORT).show();
+                    //启动一个服务端监听的县城
+                    Pivot.getInstance().startServerThread();
                 } else {
                     //表示蓝牙开启失败
                     Toast.makeText(this, "蓝牙开启失败", Toast.LENGTH_SHORT).show();
@@ -232,7 +270,21 @@ public class ConfigActivity extends BaseActivity {
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onEventMsg(EventMsg eventMsg) {
-        Toast.makeText(this, new String(eventMsg.getData()), Toast.LENGTH_SHORT).show();
+        switch (eventMsg.getCode()) {
+            case CODE_200://已连接成功到远程设备
+                Toast.makeText(this, "已连接", Toast.LENGTH_SHORT).show();
+                updateConnectedDeviceListUI();
+                break;
+            case CODE_100://收到远程设备的消息
+                String msg = new String(eventMsg.getData());
+                Toast.makeText(this, "收到消息：" + msg, Toast.LENGTH_SHORT).show();
+                break;
+            case CODE_101://远程设备断开连接
+                updateConnectedDeviceListUI();
+                break;
+            default:
+                break;
+        }
     }
 
 }

@@ -1,6 +1,7 @@
 package com.sf.bluetoothcommunication.adapter;
 
 import android.content.Context;
+import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
@@ -31,8 +32,14 @@ public abstract class BaseRecyclerAdapter<T> extends RecyclerView.Adapter<BaseRe
     }
 
     @Override
-    public void onBindViewHolder(@NonNull BaseRecyclerViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull BaseRecyclerViewHolder holder, final int position) {
         bindHolder(holder, position, mList.get(position));
+        holder.itemView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mClickItemListener != null) mClickItemListener.onItemClick(mList.get(position));
+            }
+        });
     }
 
     @Override

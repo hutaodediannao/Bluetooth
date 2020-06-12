@@ -1,6 +1,7 @@
 package com.sf.bluetoothcommunication.core;
 
 import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
 import android.util.Log;
@@ -14,6 +15,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.UUID;
+
+import static com.sf.bluetoothcommunication.model.EventMsg.CODE_0;
+import static com.sf.bluetoothcommunication.model.EventMsg.CODE_1;
+import static com.sf.bluetoothcommunication.model.EventMsg.CODE_100;
+import static com.sf.bluetoothcommunication.model.EventMsg.CODE_101;
+import static com.sf.bluetoothcommunication.model.EventMsg.CODE_200;
+import static com.sf.bluetoothcommunication.model.EventMsg.CODE_201;
 
 /**
  * 姓名:胡涛
@@ -30,12 +38,16 @@ public class Pivot {
 
     private Pivot() {
         if (connectThread != null) {
-            connectThread.disconnect();
+            connectThread.cancel();
             connectThread = null;
         }
         if (acceptThread != null) {
             acceptThread.cancel();
             acceptThread = null;
+        }
+        if (connectedThread != null) {
+            connectedThread.cancel();
+            connectedThread = null;
         }
     }
 
@@ -53,6 +65,19 @@ public class Pivot {
     private ConnectThread connectThread;
     private ConnectedThread connectedThread;
     private AcceptThread acceptThread;
+    private ExtBluetoothDevice currentConnectedDevice;
+
+    public ConnectedThread getConnectedThread() {
+        return connectedThread;
+    }
+
+    /**
+     * 获取当前已连接的设备
+     * @return
+     */
+    public ExtBluetoothDevice getCurrentConnectedDevice() {
+        return currentConnectedDevice;
+    }
 
     /**
      * 连接设备
@@ -61,7 +86,7 @@ public class Pivot {
      */
     public void connect(ExtBluetoothDevice device) {
         if (connectThread != null) {
-            connectThread.disconnect();
+            connectThread.cancel();
             connectThread = null;
         }
         //开始重新创建连接线程开启连接任务
@@ -81,13 +106,13 @@ public class Pivot {
         acceptThread.start();
     }
 
-    private BluetoothSocket mSocket;
-
     /**
      * 作为客户端连接线程
      */
     private class ConnectThread extends Thread {
+
         private ExtBluetoothDevice device;
+        private BluetoothSocket mSocket;
 
         public ConnectThread(ExtBluetoothDevice device) {
             this.device = device;
@@ -96,19 +121,24 @@ public class Pivot {
         /**
          * 关闭连接
          */
-        public void disconnect() {
-
+        public void cancel() {
+            try {
+                mSocket.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
         @Override
         public void run() {
             super.run();
             try {
-                mSocket = device.getBluetoothDevice().createRfcommSocketToServiceRecord(UUID.fromString(BLUETOOTH_UUID));
                 Log.i(TAG, "run: 开始连接");
+                mSocket = device.getBluetoothDevice().createRfcommSocketToServiceRecord(UUID.fromString(BLUETOOTH_UUID));
                 mSocket.connect();
                 //未出异常，表示连接成功,开始监听任务
-                new ConnectedThread(mSocket).start();
+                connectedThread =  new ConnectedThread(mSocket);
+                connectedThread.start();
             } catch (IOException e) {
                 e.printStackTrace();
                 try {
@@ -123,7 +153,7 @@ public class Pivot {
     /**
      * 读写公用线程
      */
-    private class ConnectedThread extends Thread {
+    public class ConnectedThread extends Thread {
         private final BluetoothSocket mmSocket;
         private final InputStream mmInStream;
         private final OutputStream mmOutStream;
@@ -132,46 +162,56 @@ public class Pivot {
             mmSocket = socket;
             InputStream tmpIn = null;
             OutputStream tmpOut = null;
-
             try {
                 tmpIn = socket.getInputStream();
                 tmpOut = socket.getOutputStream();
             } catch (IOException e) {
+                e.printStackTrace();
+                EventBus.getDefault().post(new EventMsg(null, CODE_201));
             }
-
             mmInStream = tmpIn;
             mmOutStream = tmpOut;
+            currentConnectedDevice = new ExtBluetoothDevice(socket.getRemoteDevice());
+            EventBus.getDefault().post(new EventMsg(currentConnectedDevice, CODE_200));
         }
 
         public void run() {
-            byte[] buffer = new byte[1024];  // buffer store for the stream
-            int bytes; // bytes returned from read()
-            // Keep listening to the InputStream until an exception occurs
+            byte[] buffer = new byte[1024];
+            int bytes;
             while (true) {
                 try {
-                    // Read from the InputStream
                     bytes = mmInStream.read(buffer);
-                    // Send the obtained bytes to the UI activity
-                    if (bytes > 0) EventBus.getDefault().post(new EventMsg(buffer, 100));
+                    if (bytes > 0) EventBus.getDefault().post(new EventMsg(buffer, CODE_100));
                 } catch (IOException e) {
+                    e.printStackTrace();
+                    //连接已经断开
+                    try {
+                        currentConnectedDevice = null;
+                        EventBus.getDefault().post(new EventMsg(buffer, CODE_101));
+                        mmSocket.close();
+                    } catch (IOException ex) {
+                        ex.printStackTrace();
+                    }
                     break;
                 }
             }
         }
 
-        /* Call this from the main activity to send data to the remote device */
         public void write(byte[] bytes) {
             try {
                 mmOutStream.write(bytes);
+                EventBus.getDefault().post(new EventMsg("消息发送成功".getBytes(), 300));
             } catch (IOException e) {
+                e.printStackTrace();
+                EventBus.getDefault().post(new EventMsg("消息发送失败".getBytes(), -300));
             }
         }
 
-        /* Call this from the main activity to shutdown the connection */
         public void cancel() {
             try {
                 mmSocket.close();
             } catch (IOException e) {
+                e.printStackTrace();
             }
         }
     }
@@ -186,29 +226,40 @@ public class Pivot {
             BluetoothServerSocket tmp = null;
             try {
                 tmp = BluetoothAdapter.getDefaultAdapter().listenUsingRfcommWithServiceRecord(NAME, UUID.fromString(BLUETOOTH_UUID));
-            } catch (IOException e) {}
+            } catch (IOException e) {
+                e.printStackTrace();
+                EventBus.getDefault().post(new EventMsg(null, CODE_0));
+            }
             mmServerSocket = tmp;
         }
 
         public void run() {
-            BluetoothSocket socket = null;
+            BluetoothSocket socket;
             // Keep listening until exception occurs or a socket is returned
             while (true) {
                 try {
                     socket = mmServerSocket.accept();
                 } catch (IOException e) {
+                    e.printStackTrace();
+                    EventBus.getDefault().post(new EventMsg(null, CODE_0));
                     break;
                 }
                 // If a connection was accepted
                 if (socket != null) {
                     // Do work to manage the connection (in a separate thread)
-                    new ConnectedThread(socket).start();
+                    connectedThread = new ConnectedThread(socket);
+                    connectedThread.start();
                     try {
                         mmServerSocket.close();
+                        EventBus.getDefault().post(new EventMsg(null, CODE_1));
                     } catch (IOException e) {
                         e.printStackTrace();
+                        EventBus.getDefault().post(new EventMsg(null, CODE_0));
                     }
                     break;
+                } else {
+                    //服务启动失败
+                    EventBus.getDefault().post(new EventMsg(null, CODE_0));
                 }
             }
         }
@@ -217,7 +268,9 @@ public class Pivot {
         public void cancel() {
             try {
                 mmServerSocket.close();
-            } catch (IOException e) { }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
