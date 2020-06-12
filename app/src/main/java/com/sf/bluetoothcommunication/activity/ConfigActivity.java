@@ -253,7 +253,8 @@ public class ConfigActivity extends BaseActivity {
      * @param view
      */
     public void discover(View view) {
-        startDiscover();
+        if (!bluetoothAdapter.isDiscovering())
+            startDiscover();
     }
 
     /**
@@ -264,6 +265,7 @@ public class ConfigActivity extends BaseActivity {
             if (Build.VERSION.SDK_INT >= 6.0) {
                 ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_DISCOVER);
             } else {
+                extBluetoothDeviceList.clear();
                 bluetoothAdapter.startDiscovery();
             }
         }
@@ -279,8 +281,10 @@ public class ConfigActivity extends BaseActivity {
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
         switch (requestCode) {
             case REQUEST_DISCOVER: {
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED)
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    extBluetoothDeviceList.clear();
                     bluetoothAdapter.startDiscovery();
+                }
             }
             default:
                 break;
@@ -296,14 +300,14 @@ public class ConfigActivity extends BaseActivity {
             case CODE_200://连接成功
                 Toast.makeText(this, "已连接", Toast.LENGTH_SHORT).show();
                 if (progressDialog != null)
-                progressDialog.dismiss();
+                    progressDialog.dismiss();
                 updateConnectedDeviceListUI();
                 finish();
                 break;
             case CODE_201://连接失败
                 Toast.makeText(this, "连接失败", Toast.LENGTH_SHORT).show();
                 if (progressDialog != null)
-                progressDialog.dismiss();
+                    progressDialog.dismiss();
                 break;
             case CODE_100://收到远程设备的消息
                 String msg = new String(eventMsg.getData());
