@@ -283,6 +283,7 @@ public class ConfigActivity extends BaseActivity {
                 if (progressDialog != null)
                 progressDialog.dismiss();
                 updateConnectedDeviceListUI();
+                finish();
                 break;
             case CODE_201://连接失败
                 Toast.makeText(this, "连接失败", Toast.LENGTH_SHORT).show();

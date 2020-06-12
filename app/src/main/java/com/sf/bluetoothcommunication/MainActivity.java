@@ -22,6 +22,7 @@ import static com.sf.bluetoothcommunication.model.EventMsg.CODE_202;
 public class MainActivity extends BaseActivity {
 
     private TextView tvConnectManager, tvResult;
+    private EditText etMessage;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,6 +30,7 @@ public class MainActivity extends BaseActivity {
         setContentView(R.layout.activity_main);
 
         tvResult = findViewById(R.id.tvResult);
+        etMessage = findViewById(R.id.etMessage);
         tvConnectManager = findViewById(R.id.tvConnectManager);
         BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (bluetoothAdapter == null) {
@@ -89,6 +91,8 @@ public class MainActivity extends BaseActivity {
                 break;
             case 300:
                 Toast.makeText(this, "消息发送成功", Toast.LENGTH_SHORT).show();
+                String sendMsg = etMessage.getText().toString();
+                tvResult.append(sendMsg + "\n");
                 break;
             case -300:
                 Toast.makeText(this, "消息发送失败", Toast.LENGTH_SHORT).show();
