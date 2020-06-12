@@ -16,7 +16,7 @@ import static com.sf.bluetoothcommunication.model.EventMsg.CODE_201;
  * 姓名:胡涛
  * 工号:80004074
  * 创建日期:2020/6/12 0012 14:49
- * 功能描述:蓝牙接收命令指派
+ * 功能描述:蓝牙接收命令指派，有效防止内存泄漏的问题
  */
 public class BluetoothService extends Service {
 
