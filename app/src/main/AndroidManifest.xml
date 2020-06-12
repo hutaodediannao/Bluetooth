@@ -19,10 +19,12 @@
         <service
             android:name=".service.BluetoothService"
             android:enabled="true"
-            android:exported="true"></service>
+            android:exported="true"/>
 
         <activity android:name=".activity.ConfigActivity" />
-        <activity android:name=".activity.MainActivity">
+        <activity
+            android:name=".activity.MainActivity"
+            android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

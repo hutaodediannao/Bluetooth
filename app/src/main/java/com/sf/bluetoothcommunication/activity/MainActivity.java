@@ -9,6 +9,8 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.Nullable;
+
 import com.sf.bluetoothcommunication.R;
 import com.sf.bluetoothcommunication.core.Pivot;
 import com.sf.bluetoothcommunication.model.EventMsg;
@@ -18,6 +20,7 @@ import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
 import static com.sf.bluetoothcommunication.model.EventMsg.CODE_100;
+import static com.sf.bluetoothcommunication.model.EventMsg.CODE_101;
 import static com.sf.bluetoothcommunication.model.EventMsg.CODE_2;
 import static com.sf.bluetoothcommunication.model.EventMsg.CODE_200;
 import static com.sf.bluetoothcommunication.model.EventMsg.CODE_201;
@@ -26,19 +29,64 @@ import static com.sf.bluetoothcommunication.model.EventMsg.CODE_3;
 
 public class MainActivity extends BaseActivity {
 
-    private TextView tvConnectManager, tvResult;
+    private TextView tvConnectManager, tvResult, tvDeviceName;
     private EditText etMessage;
+    private BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+    private static final int REQUEST_ENABLE_BT = 100;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         initUI();
+        //打开蓝牙设备
+        startBluetoothDevice();
+    }
+
+    /**
+     * 打开蓝牙设备
+     */
+    private void startBluetoothDevice() {
+        if (!bluetoothAdapter.isEnabled()) {
+            //蓝牙未开启，需要调用开启的api
+            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
+        } else {
+            //启动一个服务端监听的县城
+            Intent service = new Intent(this, BluetoothService.class);
+            service.setAction(BluetoothService.START_SERVER_LISTENER);
+            startService(service);
+        }
+    }
+
+    public void back(View view) {
+        if (!isFinishing()) finish();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        switch (requestCode) {
+            case REQUEST_ENABLE_BT:
+                if (resultCode == RESULT_OK) {
+                    //启动一个服务端监听的县城
+                    Intent service = new Intent(this, BluetoothService.class);
+                    service.setAction(BluetoothService.START_SERVER_LISTENER);
+                    startService(service);
+                } else {
+                    //表示蓝牙开启失败
+                    Toast.makeText(this, "蓝牙开启失败", Toast.LENGTH_SHORT).show();
+                }
+                break;
+            default:
+                break;
+        }
     }
 
     private void initUI() {
         tvResult = findViewById(R.id.tvResult);
         etMessage = findViewById(R.id.etMessage);
+        tvDeviceName = findViewById(R.id.tvDeviceName);
         tvConnectManager = findViewById(R.id.tvConnectManager);
         BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (bluetoothAdapter == null) {
@@ -47,10 +95,12 @@ public class MainActivity extends BaseActivity {
         } else {
             tvConnectManager.setVisibility(View.VISIBLE);
         }
+        updateConnectedDeviceListUI();
     }
 
     /**
      * 连接管理
+     *
      * @param view
      */
     public void connectManager(View view) {
@@ -84,11 +134,13 @@ public class MainActivity extends BaseActivity {
                 Toast.makeText(this, "已连接", Toast.LENGTH_SHORT).show();
                 if (progressDialog != null)
                     progressDialog.dismiss();
+                updateConnectedDeviceListUI();
                 break;
             case CODE_201://连接失败
                 Toast.makeText(this, "连接失败", Toast.LENGTH_SHORT).show();
                 if (progressDialog != null)
                     progressDialog.dismiss();
+                updateConnectedDeviceListUI();
                 break;
             case CODE_100:
                 String msg = Pivot.getInstance().getCurrentConnectedDevice().getBluetoothDevice().getName() + ":" + new String(eventMsg.getData());
@@ -103,8 +155,23 @@ public class MainActivity extends BaseActivity {
             case CODE_3:
                 Toast.makeText(this, "消息发送失败", Toast.LENGTH_SHORT).show();
                 break;
+            case CODE_101://远程设备断开连接
+                updateConnectedDeviceListUI();
+                break;
             default:
                 break;
+        }
+    }
+
+    /**
+     * 更新设备昵称显示
+     */
+    private void updateConnectedDeviceListUI() {
+        if (Pivot.getInstance().getCurrentConnectedDevice() != null) {
+            String deviceName = Pivot.getInstance().getCurrentConnectedDevice().getBluetoothDevice().getName();
+            tvDeviceName.setText(deviceName);
+        } else {
+            tvDeviceName.setText("暂无设备连接");
         }
     }
 }

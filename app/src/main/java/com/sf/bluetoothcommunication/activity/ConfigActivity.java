@@ -81,19 +81,6 @@ public class ConfigActivity extends BaseActivity {
         registBroadcastReceiver();
         //打开蓝牙设备
         startBluetoothDevice();
-        //查询配对设备列表
-        getBindDeviceList();
-        //启动一个蓝牙控制的服务
-        startBluetoothService();
-    }
-
-    private Intent bluetoothService;//蓝牙操作线程连接读写需要开启service进行，避免造成内存泄漏
-    /**
-     * 启动一个蓝牙服务
-     */
-    private void startBluetoothService() {
-        bluetoothService = new Intent(this, BluetoothService.class);
-        startService(bluetoothService);
     }
 
     /**
@@ -184,7 +171,6 @@ public class ConfigActivity extends BaseActivity {
     @Override
     protected void onDestroy() {
         this.unregisterReceiver(mReceiver);
-        this.stopService(bluetoothService);
         super.onDestroy();
     }
 
@@ -220,19 +206,6 @@ public class ConfigActivity extends BaseActivity {
             }
         }
     };
-
-    /**
-     * 查询配对设备列表
-     */
-    private void getBindDeviceList() {
-        Set<BluetoothDevice> pairedDevices = bluetoothAdapter.getBondedDevices();
-        if (pairedDevices.size() > 0) {
-            //获取绑定设备列表并打印
-            for (BluetoothDevice device : pairedDevices) {
-                Log.i(TAG, device.getName() + "\n" + device.getAddress());
-            }
-        }
-    }
 
     /**
      * 打开蓝牙设备
