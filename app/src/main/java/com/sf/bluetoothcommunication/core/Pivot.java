@@ -1,7 +1,6 @@
 package com.sf.bluetoothcommunication.core;
 
 import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
 import android.util.Log;
@@ -20,9 +19,11 @@ import static com.sf.bluetoothcommunication.model.EventMsg.CODE_0;
 import static com.sf.bluetoothcommunication.model.EventMsg.CODE_1;
 import static com.sf.bluetoothcommunication.model.EventMsg.CODE_100;
 import static com.sf.bluetoothcommunication.model.EventMsg.CODE_101;
+import static com.sf.bluetoothcommunication.model.EventMsg.CODE_2;
 import static com.sf.bluetoothcommunication.model.EventMsg.CODE_200;
 import static com.sf.bluetoothcommunication.model.EventMsg.CODE_201;
 import static com.sf.bluetoothcommunication.model.EventMsg.CODE_202;
+import static com.sf.bluetoothcommunication.model.EventMsg.CODE_3;
 
 /**
  * 姓名:胡涛
@@ -218,10 +219,10 @@ public class Pivot {
         public void write(byte[] bytes) {
             try {
                 mmOutStream.write(bytes);
-                EventBus.getDefault().post(new EventMsg("消息发送成功".getBytes(), 300));
+                EventBus.getDefault().post(new EventMsg("消息发送成功".getBytes(), CODE_2));
             } catch (IOException e) {
                 e.printStackTrace();
-                EventBus.getDefault().post(new EventMsg("消息发送失败".getBytes(), -300));
+                EventBus.getDefault().post(new EventMsg("消息发送失败".getBytes(), CODE_3));
             }
         }
 

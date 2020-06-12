@@ -1,4 +1,4 @@
-package com.sf.bluetoothcommunication;
+package com.sf.bluetoothcommunication.activity;
 
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
@@ -9,15 +9,20 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.sf.bluetoothcommunication.R;
 import com.sf.bluetoothcommunication.core.Pivot;
 import com.sf.bluetoothcommunication.model.EventMsg;
+import com.sf.bluetoothcommunication.service.BluetoothService;
 
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
+import static com.sf.bluetoothcommunication.model.EventMsg.CODE_100;
+import static com.sf.bluetoothcommunication.model.EventMsg.CODE_2;
 import static com.sf.bluetoothcommunication.model.EventMsg.CODE_200;
 import static com.sf.bluetoothcommunication.model.EventMsg.CODE_201;
 import static com.sf.bluetoothcommunication.model.EventMsg.CODE_202;
+import static com.sf.bluetoothcommunication.model.EventMsg.CODE_3;
 
 public class MainActivity extends BaseActivity {
 
@@ -28,7 +33,10 @@ public class MainActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        initUI();
+    }
 
+    private void initUI() {
         tvResult = findViewById(R.id.tvResult);
         etMessage = findViewById(R.id.etMessage);
         tvConnectManager = findViewById(R.id.tvConnectManager);
@@ -43,7 +51,6 @@ public class MainActivity extends BaseActivity {
 
     /**
      * 连接管理
-     *
      * @param view
      */
     public void connectManager(View view) {
@@ -54,12 +61,10 @@ public class MainActivity extends BaseActivity {
         EditText editText = findViewById(R.id.etMessage);
         String msg = editText.getText().toString();
         byte[] data = msg.getBytes();
-        Pivot.ConnectedThread connectThread = Pivot.getInstance().getConnectedThread();
-        if (connectThread != null) {
-            connectThread.write(data);
-        } else {
-            Toast.makeText(this, "连接失败", Toast.LENGTH_SHORT).show();
-        }
+        Intent service = new Intent(MainActivity.this, BluetoothService.class);
+        service.putExtra(BluetoothService.KEY, data);
+        service.setAction(BluetoothService.SEND_DATA);
+        startService(service);
     }
 
     @Override
@@ -85,17 +90,17 @@ public class MainActivity extends BaseActivity {
                 if (progressDialog != null)
                     progressDialog.dismiss();
                 break;
-            case 100:
+            case CODE_100:
                 String msg = Pivot.getInstance().getCurrentConnectedDevice().getBluetoothDevice().getName() + ":" + new String(eventMsg.getData());
                 tvResult.append(msg + "\n");
                 break;
-            case 300:
+            case CODE_2:
                 Toast.makeText(this, "消息发送成功", Toast.LENGTH_SHORT).show();
                 String sendMsg = etMessage.getText().toString();
                 tvResult.append(sendMsg + "\n");
                 etMessage.setText("");
                 break;
-            case -300:
+            case CODE_3:
                 Toast.makeText(this, "消息发送失败", Toast.LENGTH_SHORT).show();
                 break;
             default:

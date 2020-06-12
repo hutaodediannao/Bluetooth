@@ -1,4 +1,4 @@
-package com.sf.bluetoothcommunication;
+package com.sf.bluetoothcommunication.activity;
 
 import android.Manifest;
 import android.app.ProgressDialog;
@@ -23,11 +23,13 @@ import androidx.core.app.ActivityCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.sf.bluetoothcommunication.R;
 import com.sf.bluetoothcommunication.adapter.BaseRecyclerAdapter;
 import com.sf.bluetoothcommunication.adapter.DeviceAdapter;
 import com.sf.bluetoothcommunication.core.Pivot;
 import com.sf.bluetoothcommunication.model.EventMsg;
 import com.sf.bluetoothcommunication.model.ExtBluetoothDevice;
+import com.sf.bluetoothcommunication.service.BluetoothService;
 
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
@@ -81,6 +83,17 @@ public class ConfigActivity extends BaseActivity {
         startBluetoothDevice();
         //查询配对设备列表
         getBindDeviceList();
+        //启动一个蓝牙控制的服务
+        startBluetoothService();
+    }
+
+    private Intent bluetoothService;//蓝牙操作线程连接读写需要开启service进行，避免造成内存泄漏
+    /**
+     * 启动一个蓝牙服务
+     */
+    private void startBluetoothService() {
+        bluetoothService = new Intent(this, BluetoothService.class);
+        startService(bluetoothService);
     }
 
     /**
@@ -116,7 +129,10 @@ public class ConfigActivity extends BaseActivity {
                             .setPositiveButton("确定", new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                    Pivot.getInstance().disconnect(device);
+                                    Intent service = new Intent(ConfigActivity.this, BluetoothService.class);
+                                    service.putExtra(BluetoothService.KEY, device);
+                                    service.setAction(BluetoothService.DIS_CONNECT);
+                                    startService(service);
                                 }
                             }).create();
                 }
@@ -127,7 +143,10 @@ public class ConfigActivity extends BaseActivity {
             @Override
             public void onItemClick(ExtBluetoothDevice device) {
                 bluetoothAdapter.cancelDiscovery();
-                Pivot.getInstance().connect(device);
+                Intent service = new Intent(ConfigActivity.this, BluetoothService.class);
+                service.putExtra(BluetoothService.KEY, device);
+                service.setAction(BluetoothService.CONNECT);
+                startService(service);
             }
         });
     }
@@ -165,6 +184,7 @@ public class ConfigActivity extends BaseActivity {
     @Override
     protected void onDestroy() {
         this.unregisterReceiver(mReceiver);
+        this.stopService(bluetoothService);
         super.onDestroy();
     }
 
@@ -193,7 +213,6 @@ public class ConfigActivity extends BaseActivity {
                     break;
                 case BluetoothDevice.ACTION_FOUND:
                     BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-                    Log.i(TAG, device.getName() + "\n" + device.getAddress());
                     ExtBluetoothDevice extBluetoothDevice = new ExtBluetoothDevice(device);
                     extBluetoothDeviceList.add(extBluetoothDevice);
                     mDeviceAdapter.notifyDataSetChanged();
@@ -225,7 +244,9 @@ public class ConfigActivity extends BaseActivity {
             startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
         } else {
             //启动一个服务端监听的县城
-            Pivot.getInstance().startServerThread();
+            Intent service = new Intent(ConfigActivity.this, BluetoothService.class);
+            service.setAction(BluetoothService.START_SERVER_LISTENER);
+            startService(service);
         }
     }
 
@@ -239,10 +260,10 @@ public class ConfigActivity extends BaseActivity {
         switch (requestCode) {
             case REQUEST_ENABLE_BT:
                 if (resultCode == RESULT_OK) {
-                    //表示蓝牙开启成功
-                    Toast.makeText(this, "蓝牙启动成功", Toast.LENGTH_SHORT).show();
                     //启动一个服务端监听的县城
-                    Pivot.getInstance().startServerThread();
+                    Intent service = new Intent(ConfigActivity.this, BluetoothService.class);
+                    service.setAction(BluetoothService.START_SERVER_LISTENER);
+                    startService(service);
                 } else {
                     //表示蓝牙开启失败
                     Toast.makeText(this, "蓝牙开启失败", Toast.LENGTH_SHORT).show();

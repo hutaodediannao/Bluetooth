@@ -1,4 +1,4 @@
-package com.sf.bluetoothcommunication;
+package com.sf.bluetoothcommunication.activity;
 
 import android.os.Bundle;
 
