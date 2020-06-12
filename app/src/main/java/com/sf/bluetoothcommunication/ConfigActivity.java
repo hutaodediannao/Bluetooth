@@ -1,6 +1,7 @@
 package com.sf.bluetoothcommunication;
 
 import android.Manifest;
+import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
@@ -36,6 +37,8 @@ import java.util.Set;
 import static com.sf.bluetoothcommunication.model.EventMsg.CODE_100;
 import static com.sf.bluetoothcommunication.model.EventMsg.CODE_101;
 import static com.sf.bluetoothcommunication.model.EventMsg.CODE_200;
+import static com.sf.bluetoothcommunication.model.EventMsg.CODE_201;
+import static com.sf.bluetoothcommunication.model.EventMsg.CODE_202;
 
 /**
  * 姓名:胡涛
@@ -60,6 +63,7 @@ public class ConfigActivity extends BaseActivity {
     private List<ExtBluetoothDevice> extBluetoothDeviceList = new ArrayList<>();
     private RecyclerView discoverRecyclerView;
     private ProgressBar progressBar;
+    private ProgressDialog progressDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -131,7 +135,7 @@ public class ConfigActivity extends BaseActivity {
      */
     private void updateConnectedDeviceListUI() {
         extConnectedBluetoothDeviceList.clear();
-        if (Pivot.getInstance().getCurrentConnectedDevice() != null){
+        if (Pivot.getInstance().getCurrentConnectedDevice() != null) {
             extConnectedBluetoothDeviceList.add(Pivot.getInstance().getCurrentConnectedDevice());
         }
         mConnectedDeviceAdapter.notifyDataSetChanged();
@@ -271,9 +275,19 @@ public class ConfigActivity extends BaseActivity {
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onEventMsg(EventMsg eventMsg) {
         switch (eventMsg.getCode()) {
-            case CODE_200://已连接成功到远程设备
+            case CODE_202://连接中
+                progressDialog = ProgressDialog.show(this, "设备连接", "连接中");//连接设备进度对话框
+                break;
+            case CODE_200://连接成功
                 Toast.makeText(this, "已连接", Toast.LENGTH_SHORT).show();
+                if (progressDialog != null)
+                progressDialog.dismiss();
                 updateConnectedDeviceListUI();
+                break;
+            case CODE_201://连接失败
+                Toast.makeText(this, "连接失败", Toast.LENGTH_SHORT).show();
+                if (progressDialog != null)
+                progressDialog.dismiss();
                 break;
             case CODE_100://收到远程设备的消息
                 String msg = new String(eventMsg.getData());

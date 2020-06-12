@@ -24,6 +24,7 @@ public class EventMsg {
     public final static int CODE_13 = 13;
     public final static int CODE_200 = 200;//连接成功
     public final static int CODE_201 = 201;//连接失败
+    public final static int CODE_202 = 202;//连接中...
     public final static int CODE_100 = 100;//收到消息成功
     public final static int CODE_101 = 101;//连接断开
 

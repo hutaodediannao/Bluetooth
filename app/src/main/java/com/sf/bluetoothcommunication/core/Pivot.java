@@ -22,6 +22,7 @@ import static com.sf.bluetoothcommunication.model.EventMsg.CODE_100;
 import static com.sf.bluetoothcommunication.model.EventMsg.CODE_101;
 import static com.sf.bluetoothcommunication.model.EventMsg.CODE_200;
 import static com.sf.bluetoothcommunication.model.EventMsg.CODE_201;
+import static com.sf.bluetoothcommunication.model.EventMsg.CODE_202;
 
 /**
  * 姓名:胡涛
@@ -134,13 +135,14 @@ public class Pivot {
             super.run();
             try {
                 Log.i(TAG, "run: 开始连接");
+                EventBus.getDefault().post(new EventMsg(null, CODE_202));
                 mSocket = device.getBluetoothDevice().createRfcommSocketToServiceRecord(UUID.fromString(BLUETOOTH_UUID));
                 mSocket.connect();
                 //未出异常，表示连接成功,开始监听任务
                 connectedThread =  new ConnectedThread(mSocket);
                 connectedThread.start();
             } catch (IOException e) {
-                e.printStackTrace();
+                EventBus.getDefault().post(new EventMsg(null, CODE_201));
                 try {
                     mSocket.close();
                 } catch (IOException ex) {

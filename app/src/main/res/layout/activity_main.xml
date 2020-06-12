@@ -30,7 +30,6 @@
             android:layout_height="match_parent"
             android:textSize="17sp"
             android:textColor="@android:color/white"
-            android:textStyle="bold"
             android:gravity="center"
             android:layout_gravity="right"
             android:paddingRight="10dp"
@@ -55,7 +54,7 @@
         android:minHeight="200dp"
         android:layout_margin="10dp"
         android:padding="5dp"
-        android:text="暂无消息..."
+        android:hint="暂无消息..."
         android:textSize="17sp"
         android:background="@android:color/darker_gray"/>
 
