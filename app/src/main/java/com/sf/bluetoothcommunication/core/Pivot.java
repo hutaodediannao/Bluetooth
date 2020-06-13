@@ -254,7 +254,7 @@ public class Pivot {
 
         public void run() {
             BluetoothSocket socket;
-            // Keep listening until exception occurs or a socket is returned
+            // Keep listening until exception occurs or receive socket is returned
             while (true) {
                 try {
                     socket = mmServerSocket.accept();
@@ -263,9 +263,9 @@ public class Pivot {
                     EventBus.getDefault().post(new EventMsg(null, CODE_0));
                     break;
                 }
-                // If a connection was accepted
+                // If receive connection was accepted
                 if (socket != null) {
-                    // Do work to manage the connection (in a separate thread)
+                    // Do work to manage the connection (in receive separate thread)
                     connectedThread = new ConnectedThread(socket);
                     connectedThread.start();
                     try {

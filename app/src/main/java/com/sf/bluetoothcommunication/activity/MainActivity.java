@@ -156,14 +156,14 @@ public class MainActivity extends BaseActivity {
             case CODE_100://接收到消息
                 String msg = Pivot.getInstance().getCurrentConnectedDevice().getBluetoothDevice().getName() + ":" + new String(eventMsg.getData());
                 tvResult.append(msg + "\n");
-                SoundPoolPlayer.getInstance().playerMusic(this, R.raw.a);
+                SoundPoolPlayer.getInstance().playerMusic(this, R.raw.receive);
                 break;
             case CODE_2:
                 Toast.makeText(this, "消息发送成功", Toast.LENGTH_SHORT).show();
                 String sendMsg = etMessage.getText().toString();
                 tvResult.append(sendMsg + "\n");
                 etMessage.setText("");
-                SoundPoolPlayer.getInstance().playerMusic(this, R.raw.b);
+                SoundPoolPlayer.getInstance().playerMusic(this, R.raw.send);
                 break;
             case CODE_3:
                 Toast.makeText(this, "消息发送失败", Toast.LENGTH_SHORT).show();
