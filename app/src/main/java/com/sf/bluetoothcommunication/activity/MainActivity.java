@@ -4,6 +4,7 @@ import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.KeyEvent;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -13,6 +14,7 @@ import androidx.annotation.Nullable;
 
 import com.sf.bluetoothcommunication.R;
 import com.sf.bluetoothcommunication.core.Pivot;
+import com.sf.bluetoothcommunication.media.SoundPoolPlayer;
 import com.sf.bluetoothcommunication.model.EventMsg;
 import com.sf.bluetoothcommunication.service.BluetoothService;
 
@@ -41,6 +43,12 @@ public class MainActivity extends BaseActivity {
         initUI();
         //打开蓝牙设备
         startBluetoothDevice();
+    }
+
+    @Override
+    protected void onDestroy() {
+        SoundPoolPlayer.getInstance().release();
+        super.onDestroy();
     }
 
     /**
@@ -129,28 +137,33 @@ public class MainActivity extends BaseActivity {
         switch (eventMsg.getCode()) {
             case CODE_202://连接中
                 progressDialog = ProgressDialog.show(this, "设备连接", "连接中");
+                SoundPoolPlayer.getInstance().playerMusic(this, R.raw.connecting);
                 break;
             case CODE_200://连接成功
                 Toast.makeText(this, "已连接", Toast.LENGTH_SHORT).show();
                 if (progressDialog != null)
                     progressDialog.dismiss();
                 updateConnectedDeviceListUI();
+                SoundPoolPlayer.getInstance().playerMusic(this, R.raw.connect_ok);
                 break;
             case CODE_201://连接失败
                 Toast.makeText(this, "连接失败", Toast.LENGTH_SHORT).show();
                 if (progressDialog != null)
                     progressDialog.dismiss();
                 updateConnectedDeviceListUI();
+                SoundPoolPlayer.getInstance().playerMusic(this, R.raw.conect_fail);
                 break;
-            case CODE_100:
+            case CODE_100://接收到消息
                 String msg = Pivot.getInstance().getCurrentConnectedDevice().getBluetoothDevice().getName() + ":" + new String(eventMsg.getData());
                 tvResult.append(msg + "\n");
+                SoundPoolPlayer.getInstance().playerMusic(this, R.raw.a);
                 break;
             case CODE_2:
                 Toast.makeText(this, "消息发送成功", Toast.LENGTH_SHORT).show();
                 String sendMsg = etMessage.getText().toString();
                 tvResult.append(sendMsg + "\n");
                 etMessage.setText("");
+                SoundPoolPlayer.getInstance().playerMusic(this, R.raw.b);
                 break;
             case CODE_3:
                 Toast.makeText(this, "消息发送失败", Toast.LENGTH_SHORT).show();
@@ -162,6 +175,7 @@ public class MainActivity extends BaseActivity {
                 if (bluetoothAdapter.isDiscovering())
                     bluetoothAdapter.cancelDiscovery();
                 startBluetoothDevice();
+                SoundPoolPlayer.getInstance().playerMusic(this, R.raw.disconnect);
                 break;
             default:
                 break;
@@ -178,5 +192,10 @@ public class MainActivity extends BaseActivity {
         } else {
             tvDeviceName.setText("暂无设备连接");
         }
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        return false;
     }
 }
