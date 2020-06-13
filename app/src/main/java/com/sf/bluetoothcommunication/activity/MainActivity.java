@@ -156,7 +156,12 @@ public class MainActivity extends BaseActivity {
                 Toast.makeText(this, "消息发送失败", Toast.LENGTH_SHORT).show();
                 break;
             case CODE_101://远程设备断开连接
+                //更新UI
                 updateConnectedDeviceListUI();
+                //连接断开后，需要重新开启监听线程，否则无法再次连接
+                if (bluetoothAdapter.isDiscovering())
+                    bluetoothAdapter.cancelDiscovery();
+                startBluetoothDevice();
                 break;
             default:
                 break;

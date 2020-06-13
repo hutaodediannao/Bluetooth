@@ -129,6 +129,7 @@ public class ConfigActivity extends BaseActivity {
         mDeviceAdapter.setmClickItemListener(new BaseRecyclerAdapter.ClickItemListener<ExtBluetoothDevice>() {
             @Override
             public void onItemClick(ExtBluetoothDevice device) {
+                if (bluetoothAdapter.isDiscovering())
                 bluetoothAdapter.cancelDiscovery();
                 Intent service = new Intent(ConfigActivity.this, BluetoothService.class);
                 service.putExtra(BluetoothService.KEY, device);
@@ -215,7 +216,8 @@ public class ConfigActivity extends BaseActivity {
             //蓝牙未开启，需要调用开启的api
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
-        } else {
+        }
+        else {
             //启动一个服务端监听的县城
             Intent service = new Intent(ConfigActivity.this, BluetoothService.class);
             service.setAction(BluetoothService.START_SERVER_LISTENER);
