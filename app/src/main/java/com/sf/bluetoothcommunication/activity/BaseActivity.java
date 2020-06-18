@@ -1,5 +1,7 @@
 package com.sf.bluetoothcommunication.activity;
 
+import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.annotation.Nullable;
@@ -34,6 +36,10 @@ public class BaseActivity extends AppCompatActivity {
      */
     public boolean supportEventBus() {
         return false;
+    }
+
+    public void startNext(Class<? extends Activity> clas) {
+        startActivity(new Intent(this, clas));
     }
 
 }

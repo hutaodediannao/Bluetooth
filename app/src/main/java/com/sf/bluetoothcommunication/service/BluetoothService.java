@@ -21,10 +21,17 @@ import static com.sf.bluetoothcommunication.model.EventMsg.CODE_201;
 public class BluetoothService extends Service {
 
     public static final String KEY = "key";
+
+    //普通状态
     public static final String CONNECT = "connect";//连接
     public static final String DIS_CONNECT = "disconnect";//断开连接
     public static final String START_SERVER_LISTENER = "startServerListener";//开启服务端监听
     public static final String SEND_DATA = "sendData";//发送数据
+
+    //自定义指令状态
+    public static final String SEND_QUERY_DATA = "sendQueryData";//发送一条自定义查看申请查看对方相册的指令数据
+    public static final String SEND_RECEIVE_DATA = "sendQueryData";//接收一条自定义查看申请查看对方相册的指令数据
+
 
     public BluetoothService() {
     }
@@ -58,6 +65,7 @@ public class BluetoothService extends Service {
                         EventBus.getDefault().post(new EventMsg(null, CODE_201));
                     }
                     break;
+
                 default:
                     break;
             }

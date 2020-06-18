@@ -55,8 +55,11 @@ public class SoundPoolPlayer {
      * 释放资源
      */
     public void release() {
-        if (mSoundPoll != null)
-        mSoundPoll.release();
+        if (mSoundPoll != null) {
+            mSoundPoll.release();
+            mSoundPoll = null;
+            instance = null;
+        }
     }
 
 }
