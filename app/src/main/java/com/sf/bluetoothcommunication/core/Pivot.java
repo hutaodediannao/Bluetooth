@@ -160,7 +160,9 @@ public class Pivot {
                 connectedThread =  new ConnectedThread(mSocket);
                 connectedThread.start();
             } catch (IOException e) {
+                //连接已经出现异常断开了
                 EventBus.getDefault().post(new EventMsg(null, CODE_201));
+                e.printStackTrace();
                 try {
                     mSocket.close();
                 } catch (IOException ex) {

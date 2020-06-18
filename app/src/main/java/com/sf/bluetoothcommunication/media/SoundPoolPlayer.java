@@ -4,8 +4,6 @@ import android.content.Context;
 import android.media.AudioAttributes;
 import android.media.SoundPool;
 
-import com.sf.bluetoothcommunication.R;
-
 /**
  * 姓名:胡涛
  * 工号:80004074
@@ -18,7 +16,7 @@ public class SoundPoolPlayer {
 
     //设置描述音频流信息的属性
     AudioAttributes abs;
-
+    //播放控制器
     SoundPool mSoundPoll;
 
     private SoundPoolPlayer() {
@@ -30,10 +28,6 @@ public class SoundPoolPlayer {
                 .setMaxStreams(100)   //设置允许同时播放的流的最大值
                 .setAudioAttributes(abs)   //完全可以设置为null
                 .build();
-    }
-
-    public SoundPool getmSoundPoll() {
-        return mSoundPoll;
     }
 
     public static SoundPoolPlayer getInstance() {
