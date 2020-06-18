@@ -13,6 +13,7 @@ import org.greenrobot.eventbus.EventBus;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Arrays;
 import java.util.UUID;
 
 import static com.sf.bluetoothcommunication.model.EventMsg.CODE_0;
@@ -195,12 +196,20 @@ public class Pivot {
         }
 
         public void run() {
+            //缓存字节容器，最大一次性收发送可以接收到的为1024byte大小
             byte[] buffer = new byte[1024];
-            int bytes;
+            //大于0；表示收到消息。否则没有
+            int len;
             while (true) {
                 try {
-                    bytes = mmInStream.read(buffer);
-                    if (bytes > 0) EventBus.getDefault().post(new EventMsg(buffer, CODE_100));
+                    //读取输入流中的byte字节数组的长度
+                    len = mmInStream.read(buffer);
+                    if (len > 0) {
+                        //收到发送过来的byte数据，取出读取到缓存数组中的定位大小，并将其保存到新的byte字节数组中保存
+                        byte[] caches = Arrays.copyOfRange(buffer, 0, len);
+                        //发送该条数据到需要接收的地方，便于UI更新
+                        EventBus.getDefault().post(new EventMsg(caches, CODE_100));
+                    }
                 } catch (IOException e) {
                     e.printStackTrace();
                     //连接已经断开
